@@ -142,6 +142,17 @@ class Module:
         else:
             object.__setattr__(self, name, value)
 
+    @property
+    def _signals(self):
+        signals = []
+        for attr_name in dir(self):
+            if attr_name == '_signals':
+                continue
+            attr = getattr(self, attr_name)
+            if isinstance(attr, Signal):
+               signals.append(attr)
+        return signals
+
     def _collect_submodules(self):
         r = []
         for name, submodule in self._submodules:
