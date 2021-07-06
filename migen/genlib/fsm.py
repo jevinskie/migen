@@ -129,12 +129,12 @@ class FSM(Module):
     ... )
 
     """
-    def __init__(self, reset_state=None, clock_domain: Optional[ClockDomain] = None):
+    def __init__(self, reset_state=None, clock_domain: Optional[str] = None):
         self.actions = OrderedDict()
         self.state_aliases = dict()
         self.reset_state = reset_state
         # self.clock_domains.cd_fsm = clock_domain if clock_domain else ClockDomain(name="cd_sys")
-        self.fsmcd = clock_domain
+        self.fsm_cd_name = clock_domain if clock_domain else "sys"
 
         self.before_entering_signals = OrderedDict()
         self.before_leaving_signals = OrderedDict()
@@ -242,7 +242,10 @@ class FSM(Module):
             self.next_state.eq(self.state),
             Case(self.state, cases).makedefault(self.encoding[self.reset_state])
         ]
-        self.sync += self.state.eq(self.next_state)
-        # self.fsmcd.s += self.state.eq(self.next_state)
+        # self.sync += self.state.eq(self.next_state)
+        cd2s = self._cd2sync
+        s = cd2s[self.fsm_cd_name]
+        s += self.state.eq(self.next_state)
+        # self._cd2sync[self.fsm_cd_name] += self.state.eq(self.next_state)
         for register, next_value_ce, next_value in ls.registers:
             self.sync += If(next_value_ce, register.eq(next_value))
