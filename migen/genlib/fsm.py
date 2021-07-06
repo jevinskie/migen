@@ -202,12 +202,12 @@ class FSM(Module):
 
     def after_entering(self, state):
         signal = self._get_signal(self.after_entering_signals, state)
-        self.sync += signal.eq(self.before_entering(state))
+        self._cd2sync[self.fsm_cd_name] += signal.eq(self.before_entering(state))
         return signal
 
     def after_leaving(self, state):
         signal = self._get_signal(self.after_leaving_signals, state)
-        self.sync += signal.eq(self.before_leaving(state))
+        self._cd2sync[self.fsm_cd_name] += signal.eq(self.before_leaving(state))
         return signal
 
     def do_finalize(self):
@@ -243,9 +243,10 @@ class FSM(Module):
             Case(self.state, cases).makedefault(self.encoding[self.reset_state])
         ]
         # self.sync += self.state.eq(self.next_state)
-        cd2s = self._cd2sync
-        s = cd2s[self.fsm_cd_name]
-        s += self.state.eq(self.next_state)
-        # self._cd2sync[self.fsm_cd_name] += self.state.eq(self.next_state)
+        # cd2s = self._cd2sync
+        # cd2s[self.fsm_cd_name] += self.state.eq(self.next_state)
+        # s = cd2s[self.fsm_cd_name]
+        # s += self.state.eq(self.next_state)
+        self._cd2sync[self.fsm_cd_name] += self.state.eq(self.next_state)
         for register, next_value_ce, next_value in ls.registers:
-            self.sync += If(next_value_ce, register.eq(next_value))
+            self._cd2sync[self.fsm_cd_name] += If(next_value_ce, register.eq(next_value))

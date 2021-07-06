@@ -135,9 +135,8 @@ class Module:
             class CD2Sync(_ModuleProxy):
                 def __getitem__(self, cd_name):
                     return _ModuleSyncCD(self._fm, cd_name)
-                # def __setitem__(self, key, cd_name):
-                #     cd = _ModuleSyncCD(self._fm, cd_name)
-                #     cd[key] = cd_name
+                def __setitem__(self, key, cd):
+                    pass
             return CD2Sync(self)
         else:
             raise AttributeError("'"+self.__class__.__name__+"' object has no attribute '"+name+"'")
