@@ -132,7 +132,7 @@ class Module:
             self.get_fragment_called = False
             return self.get_fragment_called
         elif name == "_cd2sync":
-            class CD2Sync(_ModuleSync):
+            class CD2Sync(_ModuleProxy):
                 def __getitem__(self, cd_name):
                     return _ModuleSyncCD(self._fm, cd_name)
                 # def __setitem__(self, key, cd_name):
