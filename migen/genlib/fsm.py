@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from typing import Optional
 
 from migen.fhdl.structure import *
 from migen.fhdl.structure import _Statement, _Slice, _Part, _ArrayProxy
@@ -128,10 +129,12 @@ class FSM(Module):
     ... )
 
     """
-    def __init__(self, reset_state=None):
+    def __init__(self, reset_state=None, clock_domain: Optional[ClockDomain] = None):
         self.actions = OrderedDict()
         self.state_aliases = dict()
         self.reset_state = reset_state
+        # self.clock_domains.cd_fsm = clock_domain if clock_domain else ClockDomain(name="cd_sys")
+        self.fsmcd = clock_domain
 
         self.before_entering_signals = OrderedDict()
         self.before_leaving_signals = OrderedDict()
@@ -240,5 +243,6 @@ class FSM(Module):
             Case(self.state, cases).makedefault(self.encoding[self.reset_state])
         ]
         self.sync += self.state.eq(self.next_state)
+        # self.fsmcd.s += self.state.eq(self.next_state)
         for register, next_value_ce, next_value in ls.registers:
             self.sync += If(next_value_ce, register.eq(next_value))

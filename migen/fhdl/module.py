@@ -31,7 +31,6 @@ class _ModuleComb(_ModuleProxy):
         self._fm._fragment.comb += _flat_list(other)
         return self
 
-
 def _cd_append(d, key, statements):
     try:
         l = d[key]
@@ -146,7 +145,7 @@ class Module:
     def _signals(self):
         signals = []
         for attr_name in dir(self):
-            if attr_name == '_signals':
+            if attr_name == '_signals': # this was to avoid recursion... i think
                 continue
             attr = getattr(self, attr_name)
             if isinstance(attr, Signal):
