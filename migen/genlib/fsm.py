@@ -1,5 +1,4 @@
 from collections import OrderedDict
-from typing import Optional
 
 from migen.fhdl.structure import *
 from migen.fhdl.structure import _Statement, _Slice, _Part, _ArrayProxy
@@ -129,12 +128,10 @@ class FSM(Module):
     ... )
 
     """
-    def __init__(self, reset_state=None, clock_domain: Optional[str] = None):
+    def __init__(self, reset_state=None):
         self.actions = OrderedDict()
         self.state_aliases = dict()
         self.reset_state = reset_state
-        # self.clock_domains.cd_fsm = clock_domain if clock_domain else ClockDomain(name="cd_sys")
-        self.fsm_cd_name = clock_domain if clock_domain else "sys"
 
         self.before_entering_signals = OrderedDict()
         self.before_leaving_signals = OrderedDict()
@@ -184,6 +181,15 @@ class FSM(Module):
         self.act(state, is_ongoing.eq(1))
         return is_ongoing
 
+    def ongoing_comb(self, state):
+        """
+        Returns a combinatorial signal that has the value 1 when the FSM is in the given `state`,
+        and 0 otherwise.
+        """
+        is_ongoing = Signal()
+        self.comb += is_ongoing.eq(self.state == self.encoding[state])
+        return is_ongoing
+
     def _get_signal(self, d, state):
         if state not in self.actions:
             self.actions[state] = []
@@ -202,12 +208,12 @@ class FSM(Module):
 
     def after_entering(self, state):
         signal = self._get_signal(self.after_entering_signals, state)
-        self._cd2sync[self.fsm_cd_name] += signal.eq(self.before_entering(state))
+        self.sync += signal.eq(self.before_entering(state))
         return signal
 
     def after_leaving(self, state):
         signal = self._get_signal(self.after_leaving_signals, state)
-        self._cd2sync[self.fsm_cd_name] += signal.eq(self.before_leaving(state))
+        self.sync += signal.eq(self.before_leaving(state))
         return signal
 
     def do_finalize(self):
@@ -242,11 +248,6 @@ class FSM(Module):
             self.next_state.eq(self.state),
             Case(self.state, cases).makedefault(self.encoding[self.reset_state])
         ]
-        # self.sync += self.state.eq(self.next_state)
-        # cd2s = self._cd2sync
-        # cd2s[self.fsm_cd_name] += self.state.eq(self.next_state)
-        # s = cd2s[self.fsm_cd_name]
-        # s += self.state.eq(self.next_state)
-        self._cd2sync[self.fsm_cd_name] += self.state.eq(self.next_state)
+        self.sync += self.state.eq(self.next_state)
         for register, next_value_ce, next_value in ls.registers:
-            self._cd2sync[self.fsm_cd_name] += If(next_value_ce, register.eq(next_value))
+            self.sync += If(next_value_ce, register.eq(next_value))
