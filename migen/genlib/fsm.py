@@ -186,9 +186,19 @@ class FSM(Module):
         Returns a combinatorial signal that has the value 1 when the FSM is in the given `state`,
         and 0 otherwise.
         """
-        is_ongoing = Signal()
-        self.comb += is_ongoing.eq(self.state == self.encoding[state])
-        return is_ongoing
+        is_ongoing_comb = Signal()
+        self.comb += is_ongoing_comb.eq(self.state == self.encoding[state])
+        return is_ongoing_comb
+
+    def ongoing_ns(self, state):
+        """
+        Returns a combinatorial signal that has the value 1 when the FSM is in the given `state`,
+        and 0 otherwise.
+        """
+        is_ongoing_ns = Signal()
+        # self.act(state, NextValue(is_ongoing_ns, self.next_state == self.encoding[state]))
+        self.sync.jtag_inv += is_ongoing_ns.eq(self.next_state == self.encoding[state])
+        return is_ongoing_ns
 
     def _get_signal(self, d, state):
         if state not in self.actions:
