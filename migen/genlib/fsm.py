@@ -137,6 +137,8 @@ class FSM(Module):
         self.before_leaving_signals = OrderedDict()
         self.after_entering_signals = OrderedDict()
         self.after_leaving_signals = OrderedDict()
+        self.ongoing_signals = OrderedDict()
+
 
     def act(self, state, *statements):
         """
@@ -172,12 +174,13 @@ class FSM(Module):
         else:
             self.state_aliases[name] = target
 
-    def ongoing(self, state):
+    def ongoing(self, state, reset=0, reset_less=False):
         """
         Returns a signal that has the value 1 when the FSM is in the given `state`,
         and 0 otherwise.
         """
-        is_ongoing = Signal()
+        is_ongoing = Signal(reset=reset, reset_less=reset_less)
+        self.ongoing_signals[state] = is_ongoing
         self.act(state, is_ongoing.eq(1))
         return is_ongoing
 
@@ -197,7 +200,7 @@ class FSM(Module):
         """
         is_ongoing_ns = Signal()
         # self.act(state, NextValue(is_ongoing_ns, self.next_state == self.encoding[state]))
-        self.sync.jtag_inv += is_ongoing_ns.eq(self.next_state == self.encoding[state])
+        self.comb += is_ongoing_ns.eq(self.next_state == self.encoding[state])
         return is_ongoing_ns
 
     def _get_signal(self, d, state):
@@ -227,8 +230,18 @@ class FSM(Module):
         return signal
 
     def do_finalize(self):
+        for state, signal in self.ongoing_signals.items():
+            if signal.reset.value:
+                for other_state in set(self.actions) - set([state]):
+                    self.actions[other_state].append(signal.eq(0))
+
         nstates = len(self.actions)
-        self.encoding = dict((s, n) for n, s in enumerate(self.actions.keys()))
+        if 'encoding' in dir(self):
+            assert sorted(self.actions) == sorted(self.encoding.keys())
+            assert all(map(lambda ev: 0 <= ev < nstates, self.encoding.values()))
+            assert list(set(self.encoding.values())) == list(self.encoding.values())
+        else:
+            self.encoding = dict((s, n) for n, s in enumerate(self.actions.keys()))
         self.decoding = {n: s for s, n in self.encoding.items()}
 
         self.state = Signal(max=nstates, reset=self.encoding[self.reset_state])
@@ -245,6 +258,10 @@ class FSM(Module):
         for state, signal in self.before_entering_signals.items():
             encoded = self.encoding[state]
             self.comb += signal.eq(~(self.state == encoded) & (self.next_state == encoded))
+        # for state, signal in self.ongoing_signals.items():
+        #     if signal.reset.value:
+        #         for other_state in set(self.actions) - set([state]):
+        #             self.act(other_state, signal.eq(0))
 
         # Allow overriding and extending control functionality (Next*) in subclasses.
         self._finalize_sync(self._lower_controls())
