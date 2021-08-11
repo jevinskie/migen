@@ -24,6 +24,27 @@ _io = [
         Subsignal("n", Pins("AD19"), IOStandard("LVDS_25"),
             Misc("DIFF_TERM=TRUE"))
     ),
+
+    ("sfp", 0,
+        Subsignal("txp", Pins("W4")),
+        Subsignal("txn", Pins("W3")),
+        Subsignal("rxp", Pins("Y6")),
+        Subsignal("rxn", Pins("Y5"))
+    ),
+    ("sfp_tx_disable_n", 0, Pins("AA18"), IOStandard("LVCMOS25")),
+
+    ("si5324", 0,
+        Subsignal("rst_n", Pins("W23"), IOStandard("LVCMOS25")),
+        Subsignal("int", Pins("AJ25"), IOStandard("LVCMOS25"))
+    ),
+    ("si5324_clkin", 0,
+        Subsignal("p", Pins("AD20"), IOStandard("LVDS_25")),
+        Subsignal("n", Pins("AE20"), IOStandard("LVDS_25"))
+    ),
+    ("si5324_clkout", 0,
+        Subsignal("p", Pins("AC8")),
+        Subsignal("n", Pins("AC7"))
+    ),
 ]
 
 _connectors = [
