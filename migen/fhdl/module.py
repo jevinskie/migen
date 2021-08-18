@@ -1,5 +1,4 @@
 import collections.abc
-from collections import UserDict
 from itertools import combinations
 
 from migen.util.misc import flat_iteration
@@ -31,6 +30,7 @@ class _ModuleComb(_ModuleProxy):
     def __iadd__(self, other):
         self._fm._fragment.comb += _flat_list(other)
         return self
+
 
 def _cd_append(d, key, statements):
     try:
@@ -102,7 +102,7 @@ class Module:
         self.finalize()
         return self._fragment
 
-    def __getattr__(self, name, *args):
+    def __getattr__(self, name):
         if name == "comb":
             return _ModuleComb(self)
         elif name == "sync":
@@ -131,13 +131,7 @@ class Module:
         elif name == "get_fragment_called":
             self.get_fragment_called = False
             return self.get_fragment_called
-        elif name == "_cd2sync":
-            class CD2Sync(_ModuleProxy):
-                def __getitem__(self, cd_name):
-                    return _ModuleSyncCD(self._fm, cd_name)
-                def __setitem__(self, key, cd):
-                    pass
-            return CD2Sync(self)
+
         else:
             raise AttributeError("'"+self.__class__.__name__+"' object has no attribute '"+name+"'")
 
