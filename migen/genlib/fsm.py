@@ -184,25 +184,6 @@ class FSM(Module):
         self.act(state, is_ongoing.eq(1))
         return is_ongoing
 
-    def ongoing_comb(self, state):
-        """
-        Returns a combinatorial signal that has the value 1 when the FSM is in the given `state`,
-        and 0 otherwise.
-        """
-        is_ongoing_comb = Signal()
-        self.comb += is_ongoing_comb.eq(self.state == self.encoding[state])
-        return is_ongoing_comb
-
-    def ongoing_ns(self, state):
-        """
-        Returns a combinatorial signal that has the value 1 when the FSM is in the given `state`,
-        and 0 otherwise.
-        """
-        is_ongoing_ns = Signal()
-        # self.act(state, NextValue(is_ongoing_ns, self.next_state == self.encoding[state]))
-        self.comb += is_ongoing_ns.eq(self.next_state == self.encoding[state])
-        return is_ongoing_ns
-
     def _get_signal(self, d, state):
         if state not in self.actions:
             self.actions[state] = []
@@ -258,10 +239,6 @@ class FSM(Module):
         for state, signal in self.before_entering_signals.items():
             encoded = self.encoding[state]
             self.comb += signal.eq(~(self.state == encoded) & (self.next_state == encoded))
-        # for state, signal in self.ongoing_signals.items():
-        #     if signal.reset.value:
-        #         for other_state in set(self.actions) - set([state]):
-        #             self.act(other_state, signal.eq(0))
 
         # Allow overriding and extending control functionality (Next*) in subclasses.
         self._finalize_sync(self._lower_controls())
