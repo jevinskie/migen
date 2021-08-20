@@ -353,7 +353,7 @@ class Signal(_Value):
     """
     _name_re = _re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
-    def __init__(self, bits_sign=None, name=None, variable=False, reset=0,
+    def __init__(self, bits_sign=None, name=None, variable=False, reset=0, init=None,
                  reset_less=False, name_override=None, min=None, max=None,
                  related=None, attr=None):
         from migen.fhdl.bitcontainer import bits_for
@@ -383,6 +383,8 @@ class Signal(_Value):
                 self.nbits, self.signed = bits_sign, False
         if isinstance(reset, (bool, int)):
             reset = Constant(reset, (self.nbits, self.signed))
+        if isinstance(init, (bool, int)):
+            init = Constant(init, (self.nbits, self.signed))
         if not isinstance(self.nbits, int) or self.nbits <= 0:
             raise ValueError("Signal width must be a strictly positive integer")
         if attr is None:
@@ -391,6 +393,7 @@ class Signal(_Value):
         self.variable = variable  # deprecated
         self.reset = reset
         self.reset_less = reset_less
+        self.init = init if init is not None else reset
         self.name_override = name_override
         self.backtrace = _tracer.trace_back(name)
         self.related = related

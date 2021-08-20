@@ -242,7 +242,7 @@ def _printheader(f, ios, name, ns, attr_translate):
             r += "wire " + _printsig(ns, sig) + ";\n"
         else:
             if sig not in comb_regs:
-                r += "reg " + _printsig(ns, sig) + " = " + _printexpr(ns, sig.reset)[0] + ";\n"
+                r += "reg " + _printsig(ns, sig) + " = " + _printexpr(ns, sig.init)[0] + ";\n"
             else:
                 r += "reg " + _printsig(ns, sig) + ";\n"
     r += "\n"
