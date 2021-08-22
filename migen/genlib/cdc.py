@@ -303,3 +303,22 @@ class Gearbox(Module):
         for i in range(rdchunks):
             cases[i] = [self.o.eq(storage[owidth*i:owidth*(i+1)])]
         self.sync.read += Case(rdpointer, cases)
+
+
+class AsyncClockMux(Special):
+    def __init__(self, cd_0: ClockDomain, cd_1: ClockDomain, cd_out: ClockDomain, sel: Signal):
+        Special.__init__(self)
+        self.cd_0 = cd_0
+        self.cd_1 = cd_1
+        self.cd_out = cd_out
+        self.sel = wrap(sel)
+
+    def iter_expressions(self):
+        yield self.cd_0, "clk", SPECIAL_INPUT
+        yield self.cd_1, "clk", SPECIAL_INPUT
+        yield self.cd_out, "clk", SPECIAL_OUTPUT
+        yield self, "sel", SPECIAL_INPUT
+
+    @staticmethod
+    def lower(dr):
+        raise NotImplementedError("Attempted to use an async clock mux, but platform does not support them")
