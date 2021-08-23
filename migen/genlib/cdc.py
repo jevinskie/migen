@@ -306,18 +306,20 @@ class Gearbox(Module):
 
 
 class AsyncClockMux(Special):
-    def __init__(self, cd_0: ClockDomain, cd_1: ClockDomain, cd_out: ClockDomain, sel: Signal):
+    def __init__(self, cd_0: ClockDomain, cd_1: ClockDomain, cd_out: ClockDomain, sel: Signal, rst: Signal):
         Special.__init__(self)
         self.cd_0 = cd_0
         self.cd_1 = cd_1
         self.cd_out = cd_out
         self.sel = wrap(sel)
+        self.rst = wrap(rst)
 
     def iter_expressions(self):
         yield self.cd_0, "clk", SPECIAL_INPUT
         yield self.cd_1, "clk", SPECIAL_INPUT
         yield self.cd_out, "clk", SPECIAL_OUTPUT
         yield self, "sel", SPECIAL_INPUT
+        yield self, "rst", SPECIAL_INPUT
 
     @staticmethod
     def lower(dr):
