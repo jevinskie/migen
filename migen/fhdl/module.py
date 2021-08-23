@@ -143,7 +143,7 @@ class Module:
             object.__setattr__(self, name, value)
 
     @property
-    def _signals(self):
+    def _signals(self, max_depth=1):
         signals = []
         for attr_name in dir(self):
             if attr_name == '_signals': # this was to avoid recursion... i think
