@@ -86,7 +86,7 @@ def layout_partial(layout, *elements):
 
 
 class Record:
-    def __init__(self, layout, name=None, **kwargs):
+    def __init__(self, layout, name=None, flat_naming=False, **kwargs):
         self.name = get_obj_var_name(name, "")
         self.layout = layout
 
@@ -106,7 +106,10 @@ class Record:
                 finst = Signal(fsize, name=prefix + fname, **kwargs)
             elif isinstance(f[1], list):  # case 4
                 fname, fsublayout = f
-                finst = Record(fsublayout, prefix + fname, **kwargs)
+                if not flat_naming:
+                    finst = Record(fsublayout, prefix + fname, **kwargs)
+                else:
+                    finst = Record(fsublayout, name, **kwargs)
             else:
                 raise TypeError
             setattr(self, fname, finst)
