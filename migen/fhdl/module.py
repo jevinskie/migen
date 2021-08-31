@@ -95,7 +95,7 @@ class _ModuleClockDomains(_ModuleProxy, _ModuleForwardAttr):
         return self
 
 
-class Module:
+class Module(DunderSignalsMixin):
     def get_fragment(self):
         assert(not self.get_fragment_called)
         self.get_fragment_called = True
@@ -141,17 +141,6 @@ class Module:
                 raise AttributeError("Attempted to assign special Module property - use += instead")
         else:
             object.__setattr__(self, name, value)
-
-    @property
-    def _signals(self, max_depth=1):
-        signals = []
-        for attr_name in dir(self):
-            if attr_name == '_signals': # this was to avoid recursion... i think
-                continue
-            attr = getattr(self, attr_name)
-            if isinstance(attr, Signal):
-               signals.append(attr)
-        return signals
 
     def _collect_submodules(self):
         r = []

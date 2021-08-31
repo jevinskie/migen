@@ -6,6 +6,17 @@ import re as _re
 from migen.fhdl import tracer as _tracer
 from migen.util.misc import flat_iteration as _flat_iteration
 
+class DunderSignalsMixin:
+    @property
+    def _signals(self, max_depth=1):
+        signals = []
+        for attr_name in dir(self):
+            if attr_name == '_signals': # this was to avoid recursion... i think
+                continue
+            attr = getattr(self, attr_name)
+            if isinstance(attr, Signal):
+               signals.append(attr)
+        return signals
 
 class DUID:
     """Deterministic Unique IDentifier"""

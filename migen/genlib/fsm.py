@@ -128,10 +128,11 @@ class FSM(Module):
     ... )
 
     """
-    def __init__(self, reset_state=None):
+    def __init__(self, reset_state=None, name=None):
         self.actions = OrderedDict()
         self.state_aliases = dict()
         self.reset_state = reset_state
+        self.name = name
 
         self.before_entering_signals = OrderedDict()
         self.before_leaving_signals = OrderedDict()
@@ -225,9 +226,9 @@ class FSM(Module):
             self.encoding = dict((s, n) for n, s in enumerate(self.actions.keys()))
         self.decoding = {n: s for s, n in self.encoding.items()}
 
-        self.state = Signal(max=nstates, reset=self.encoding[self.reset_state])
+        self.state = Signal(max=nstates, reset=self.encoding[self.reset_state], name=f"{self.name}_state" if self.name else None)
         self.state._enumeration = self.decoding
-        self.next_state = Signal(max=nstates)
+        self.next_state = Signal(max=nstates, name=f"{self.name}_next_state" if self.name else None)
         self.next_state._enumeration = {n: "{}:{}".format(n, s) for n, s in self.decoding.items()}
 
         # drive entering/leaving signals
