@@ -9,12 +9,13 @@ from migen.util.misc import flat_iteration as _flat_iteration
 class DunderSignalsMixin:
     @property
     def _signals(self, max_depth=1):
+        from migen.genlib.record import Record
         signals = []
         for attr_name in dir(self):
             if attr_name == '_signals': # this was to avoid recursion... i think
                 continue
             attr = getattr(self, attr_name)
-            if isinstance(attr, Signal):
+            if isinstance(attr, Signal) or isinstance(attr, Record):
                signals.append(attr)
         return signals
 
