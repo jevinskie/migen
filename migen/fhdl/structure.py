@@ -7,17 +7,30 @@ from migen.fhdl import tracer as _tracer
 from migen.util.misc import flat_iteration as _flat_iteration
 
 class DunderSignalsMixin:
-    @property
-    def _signals(self, max_depth=1):
-        from migen.genlib.record import Record
+    def _get_signals(self, recurse=False):
+        from migen.genlib.record import Record as _Record
+        from migen.fhdl.module import Module as _Module
         signals = []
         for attr_name in dir(self):
-            if attr_name == '_signals': # this was to avoid recursion... i think
+            if attr_name == '_signals' or attr_name == '_signals_recursive' or attr_name == '_get_signals' \
+                    or (attr_name[:2] == '__' and attr_name[-2:] == '__'): # this was to avoid recursion... i think
                 continue
             attr = getattr(self, attr_name)
-            if isinstance(attr, Signal) or isinstance(attr, Record):
+            if isinstance(attr, Signal) or isinstance(attr, _Record):
                signals.append(attr)
+        if recurse:
+            for submod_name, submod in self._submodules:
+                signals += submod._get_signals(recurse=True)
         return signals
+
+    @property
+    def _signals(self):
+        return self._get_signals()
+
+    @property
+    def _signals_recursive(self):
+        return self._get_signals(recurse=True)
+
 
 class DUID:
     """Deterministic Unique IDentifier"""
