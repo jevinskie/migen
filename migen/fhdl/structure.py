@@ -18,6 +18,8 @@ class DunderSignalsMixin:
             attr = getattr(self, attr_name)
             if isinstance(attr, Signal) or isinstance(attr, _Record):
                signals.append(attr)
+            if hasattr(attr, '_signals'):
+                signals += attr._signals
         if recurse:
             if hasattr(self, '_submodules'):
                 for submod_name, submod in self._submodules:
