@@ -322,3 +322,17 @@ class AsyncClockMux(Special):
     @staticmethod
     def lower(dr):
         raise NotImplementedError("Attempted to use an async clock mux, but platform does not support them")
+
+
+class ClockBuffer(Special):
+    def __init__(self, cd: ClockDomain):
+        Special.__init__(self)
+        self.cd = cd
+
+    def iter_expressions(self):
+        yield self.cd, "clk", SPECIAL_INPUT
+        yield self.cd, "clk", SPECIAL_OUTPUT
+
+    @staticmethod
+    def lower(dr):
+        raise NotImplementedError("Attempted to use an async clock mux, but platform does not support them")
