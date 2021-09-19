@@ -328,6 +328,15 @@ class ClockBuffer(Special):
     def __init__(self, cd: ClockDomain):
         Special.__init__(self)
         self.cd = cd
+        self.clk_in = cd.clk
+        if hasattr(cd.clk, 'name'):
+            name_orig = self.clk_in.name
+            self.clk_in.name += '_unbuf'
+        else:
+            name_orig = None
+            self.clk_in.name = f'{cd.name}_clk_unbuf'
+        self.clk_out = Signal(name=name_orig if name_orig else f'clkbuf_cd_{cd.name}_clk_out')
+        self.cd.clk = self.clk_out
 
     def iter_expressions(self):
         yield self.cd, "clk", SPECIAL_INPUT
