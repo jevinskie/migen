@@ -309,7 +309,7 @@ class Constant(_Value):
         signed (can represent negative values). `bits_sign` defaults
         to the minimum width and signedness of `value`.
     """
-    def __init__(self, value, bits_sign=None):
+    def __init__(self, value, bits_sign=None, print_plain=False):
         from migen.fhdl.bitcontainer import bits_for
 
         _Value.__init__(self)
@@ -320,6 +320,7 @@ class Constant(_Value):
         elif isinstance(bits_sign, int):
             bits_sign = bits_sign, self.value < 0
         self.nbits, self.signed = bits_sign
+        self.print_plain = print_plain
         if not isinstance(self.nbits, int) or self.nbits <= 0:
             raise TypeError("Width must be a strictly positive integer")
 
