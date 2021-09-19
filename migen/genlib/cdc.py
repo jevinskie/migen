@@ -335,4 +335,4 @@ class ClockBuffer(Special):
 
     @staticmethod
     def lower(dr):
-        raise NotImplementedError("Attempted to use an async clock mux, but platform does not support them")
+        raise NotImplementedError("Attempted to use a clock buffer, but platform does not support them")

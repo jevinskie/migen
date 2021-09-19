@@ -75,16 +75,26 @@ class _ModuleForwardAttr:
 
 class _ModuleSpecials(_ModuleProxy, _ModuleForwardAttr):
     def __iadd__(self, other):
+        from migen.fhdl.module import Module
+        if isinstance(other, Module):
+            raise TypeError("Can't add a Module to the Specials list")
         self._fm._fragment.specials |= set(_flat_list(other))
         return self
 
 
 class _ModuleSubmodules(_ModuleProxy):
     def __setattr__(self, name, value):
+        from migen.fhdl.specials import Special
+        for e in _flat_list(value):
+            if isinstance(e, Special):
+                raise TypeError("Can't add a Special to the submodules list")
         self._fm._submodules += [(name, e) for e in _flat_list(value)]
         setattr(self._fm, name, value)
 
     def __iadd__(self, other):
+        from migen.fhdl.specials import Special
+        if isinstance(other, Special):
+            raise TypeError("Can't add a Special to the submodules list")
         self._fm._submodules += [(None, e) for e in _flat_list(other)]
         return self
 
