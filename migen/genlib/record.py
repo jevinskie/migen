@@ -196,3 +196,6 @@ class Record:
 
     def __repr__(self):
         return "<Record " + ":".join(f[0] for f in self.layout) + " at " + hex(id(self)) + ">"
+
+    def __iter__(self):
+        return map(lambda t: t[0], self.iter_flat())
