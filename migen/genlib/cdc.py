@@ -325,9 +325,10 @@ class AsyncClockMux(Special):
 
 
 class ClockBuffer(Special):
-    def __init__(self, cd: ClockDomain):
+    def __init__(self, cd: ClockDomain, force_le_routing=False):
         Special.__init__(self)
         self.cd = cd
+        self.force_le_routing = force_le_routing
         self.clk_in = cd.clk
         if hasattr(cd.clk, 'name'):
             name_orig = self.clk_in.name
