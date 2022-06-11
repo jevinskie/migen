@@ -103,11 +103,16 @@ class _LowerNext(NodeTransformer):
 
 
 class _LowerDisplaySyncs(NodeTransformer):
+    def __init__(self):
+        super().__init__()
+        self.dead = True
+
     def visit_Assign(self, node):
         return NOPStatement()
 
     def visit_Display(self, node):
         if isinstance(node, DisplaySync):
+            self.dead = False
             return node
         return NOPStatement()
 
@@ -123,6 +128,7 @@ class _LowerDisplaySyncs(NodeTransformer):
 class _LowerDisplayEnters(_LowerDisplaySyncs):
     def visit_Display(self, node):
         if isinstance(node, DisplayEnter):
+            self.dead = False
             return node
         return NOPStatement()
 
@@ -291,12 +297,13 @@ class FSM(Module):
             self.sync += If(next_value_ce, register.eq(next_value))
 
         disps_sync = dict((self.encoding[k], lds.visit(v)) for k, v in self.actions.items() if v)
-        for enc, stmts in disps_sync.items():
-            self.sync += If(self.state == enc, *stmts)
+        if not lds.dead:
+            for enc, stmts in disps_sync.items():
+                self.sync += If(self.state == enc, *stmts)
 
         disp_enter = dict((self.encoding[k], lde.visit(v)) for k, v in self.actions.items() if v)
-        if any(map(len, disp_enter.values())):
+        if not lde.dead:
             self.last_state = Signal.like(self.state)
             self.sync += self.last_state.eq(self.state)
-        for enc, stmts in disp_enter.items():
-            self.sync += If(self.state == enc & (self.last_state != self.state), *stmts)
+            for enc, stmts in disp_enter.items():
+                self.sync += If(self.state == enc & (self.last_state != self.state), *stmts)
