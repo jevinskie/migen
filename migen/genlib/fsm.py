@@ -67,6 +67,10 @@ class _LowerNext(NodeTransformer):
                 return x[1], x[2]
         raise KeyError
 
+    def visit_Display(self, node):
+        print(f"visited disp {node.s}")
+        return node
+
     def visit_unknown(self, node):
         if isinstance(node, NextState):
             try:
@@ -84,6 +88,8 @@ class _LowerNext(NodeTransformer):
                 self.registers.append((node.target, next_value_ce, next_value))
             return next_value.eq(node.value), next_value_ce.eq(1)
         else:
+            if isinstance(node, Display):
+                print(f"LowerNext got disp s: {node.s}")
             return node
 
 
@@ -235,6 +241,7 @@ class FSM(Module):
 
     def _finalize_sync(self, ls):
         cases = dict((self.encoding[k], ls.visit(v)) for k, v in self.actions.items() if v)
+        print(f"cases: {cases}")
         self.comb += [
             self.next_state.eq(self.state),
             Case(self.state, cases).makedefault(self.encoding[self.reset_state])

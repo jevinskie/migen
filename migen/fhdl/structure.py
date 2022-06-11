@@ -761,6 +761,7 @@ class _ClockDomainList(list):
 class Display(_Statement):
     def __init__(self, s, *args):
         self.s = s
+        print(f"NEW DISPLAY: s: {s}")
         self.args = args
 
 class Finish(_Statement):

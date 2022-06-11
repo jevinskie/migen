@@ -43,6 +43,16 @@ class _InputLister(NodeVisitor):
         self.visit(node.r)
 
 
+class _DisplayLister(NodeVisitor):
+    def __init__(self):
+        self.output_list = set()
+
+    def visit_Display(self, node):
+        for arg in node.args:
+            self.visit(arg)
+        self.output_list.add(node)
+
+
 def list_signals(node):
     lister = _SignalLister()
     lister.visit(node)
@@ -57,6 +67,12 @@ def list_targets(node):
 
 def list_inputs(node):
     lister = _InputLister()
+    lister.visit(node)
+    return lister.output_list
+
+
+def list_displays(node):
+    lister = _DisplayLister()
     lister.visit(node)
     return lister.output_list
 
