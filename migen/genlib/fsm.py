@@ -258,9 +258,7 @@ class FSM(Module):
         return _LowerNext(self.next_state, self.encoding, self.state_aliases)
 
     def _lower_displays(self):
-        print(f"!!!! lds: {list_displays(self)}")
         res = _LowerDisplays()
-        print(f"res type: {type(res)} res: {res}")
         return res
 
     def _finalize_sync(self, ls, ld):
@@ -275,6 +273,5 @@ class FSM(Module):
             self.sync += If(next_value_ce, register.eq(next_value))
 
         disps = dict((self.encoding[k], ld.visit(v)) for k, v in self.actions.items() if v)
-        print(f"disps: {disps}")
         for enc, disp in disps.items():
             self.sync += If(self.state == enc, *disp)
