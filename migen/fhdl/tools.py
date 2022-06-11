@@ -48,8 +48,6 @@ class _DisplayLister(NodeVisitor):
         self.output_list = set()
 
     def visit_Display(self, node):
-        for arg in node.args:
-            self.visit(arg)
         self.output_list.add(node)
 
 

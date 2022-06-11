@@ -1,8 +1,10 @@
+from ast import Assign
 from collections import OrderedDict
 
 from migen.fhdl.structure import *
 from migen.fhdl.structure import _Statement, _Slice, _Part, _ArrayProxy
 from migen.fhdl.module import Module, FinalizeError
+from migen.fhdl.tools import list_displays
 from migen.fhdl.visit import NodeTransformer
 from migen.fhdl.bitcontainer import value_bits_sign
 
@@ -68,8 +70,7 @@ class _LowerNext(NodeTransformer):
         raise KeyError
 
     def visit_Display(self, node):
-        print(f"visited disp {node.s}")
-        return node
+        return NOPStatement()
 
     def visit_unknown(self, node):
         if isinstance(node, NextState):
@@ -88,10 +89,27 @@ class _LowerNext(NodeTransformer):
                 self.registers.append((node.target, next_value_ce, next_value))
             return next_value.eq(node.value), next_value_ce.eq(1)
         else:
-            if isinstance(node, Display):
-                print(f"LowerNext got disp s: {node.s}")
             return node
 
+
+class _LowerDisplays(NodeTransformer):
+    def __init__(self):
+        self.displays = []
+
+    def visit_Assign(self, node):
+        return NOPStatement()
+
+    def visit_Display(self, node):
+        self.displays.append(node)
+        return node
+
+    def visit_unknown(self, node):
+        if isinstance(node, NextState):
+            return NOPStatement()
+        elif isinstance(node, NextValue):
+            return NOPStatement()
+        else:
+            return node
 
 class FSM(Module):
     """
@@ -234,14 +252,20 @@ class FSM(Module):
             self.comb += signal.eq(~(self.state == encoded) & (self.next_state == encoded))
 
         # Allow overriding and extending control functionality (Next*) in subclasses.
-        self._finalize_sync(self._lower_controls())
+        self._finalize_sync(self._lower_controls(), self._lower_displays())
 
     def _lower_controls(self):
         return _LowerNext(self.next_state, self.encoding, self.state_aliases)
 
-    def _finalize_sync(self, ls):
+    def _lower_displays(self):
+        print(f"!!!! lds: {list_displays(self)}")
+        res = _LowerDisplays()
+        print(f"res type: {type(res)} res: {res}")
+        return res
+
+    def _finalize_sync(self, ls, ld):
         cases = dict((self.encoding[k], ls.visit(v)) for k, v in self.actions.items() if v)
-        print(f"cases: {cases}")
+        # print(f"cases: {cases}")
         self.comb += [
             self.next_state.eq(self.state),
             Case(self.state, cases).makedefault(self.encoding[self.reset_state])
@@ -249,3 +273,8 @@ class FSM(Module):
         self.sync += self.state.eq(self.next_state)
         for register, next_value_ce, next_value in ls.registers:
             self.sync += If(next_value_ce, register.eq(next_value))
+
+        disps = dict((self.encoding[k], ld.visit(v)) for k, v in self.actions.items() if v)
+        print(f"disps: {disps}")
+        for enc, disp in disps.items():
+            self.sync += If(self.state == enc, *disp)

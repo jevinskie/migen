@@ -475,6 +475,10 @@ class _Statement:
     pass
 
 
+class NOPStatement(_Statement):
+    pass
+
+
 class _Assign(_Statement):
     def __init__(self, l, r):
         self.l = wrap(l)
@@ -761,7 +765,6 @@ class _ClockDomainList(list):
 class Display(_Statement):
     def __init__(self, s, *args):
         self.s = s
-        print(f"NEW DISPLAY: s: {s}")
         self.args = args
 
 class Finish(_Statement):
