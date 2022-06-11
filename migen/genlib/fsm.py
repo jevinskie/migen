@@ -4,12 +4,11 @@ from collections import OrderedDict
 from migen.fhdl.structure import *
 from migen.fhdl.structure import _Statement, _Slice, _Part, _ArrayProxy
 from migen.fhdl.module import Module, FinalizeError
-from migen.fhdl.tools import list_displays
 from migen.fhdl.visit import NodeTransformer
 from migen.fhdl.bitcontainer import value_bits_sign
 
 
-__all__ = ["AnonymousState", "NextState", "NextValue", "FSM"]
+__all__ = ["AnonymousState", "DisplayEnter", "DisplaySync", "NextState", "NextValue", "FSM"]
 
 
 class AnonymousState:
@@ -27,6 +26,14 @@ class NextValue(_Statement):
     def __init__(self, target, value):
         self.target = target
         self.value = value
+
+
+class DisplaySync(Display):
+    pass
+
+
+class DisplayEnter(Display):
+    pass
 
 
 def _target_eq(a, b):
@@ -70,7 +77,10 @@ class _LowerNext(NodeTransformer):
         raise KeyError
 
     def visit_Display(self, node):
-        return NOPStatement()
+        if not isinstance(node, DisplaySync) and not isinstance(node, DisplayEnter):
+            return node
+        else:
+            return NOPStatement()
 
     def visit_unknown(self, node):
         if isinstance(node, NextState):
@@ -92,16 +102,14 @@ class _LowerNext(NodeTransformer):
             return node
 
 
-class _LowerDisplays(NodeTransformer):
-    def __init__(self):
-        self.displays = []
-
+class _LowerDisplaySyncs(NodeTransformer):
     def visit_Assign(self, node):
         return NOPStatement()
 
     def visit_Display(self, node):
-        self.displays.append(node)
-        return node
+        if isinstance(node, DisplaySync):
+            return node
+        return NOPStatement()
 
     def visit_unknown(self, node):
         if isinstance(node, NextState):
@@ -110,6 +118,14 @@ class _LowerDisplays(NodeTransformer):
             return NOPStatement()
         else:
             return node
+
+
+class _LowerDisplayEnters(_LowerDisplaySyncs):
+    def visit_Display(self, node):
+        if isinstance(node, DisplayEnter):
+            return node
+        return NOPStatement()
+
 
 class FSM(Module):
     """
@@ -252,16 +268,18 @@ class FSM(Module):
             self.comb += signal.eq(~(self.state == encoded) & (self.next_state == encoded))
 
         # Allow overriding and extending control functionality (Next*) in subclasses.
-        self._finalize_sync(self._lower_controls(), self._lower_displays())
+        self._finalize_sync(self._lower_controls(), self._lower_display_syncs(), self._lower_display_enters())
 
     def _lower_controls(self):
         return _LowerNext(self.next_state, self.encoding, self.state_aliases)
 
-    def _lower_displays(self):
-        res = _LowerDisplays()
-        return res
+    def _lower_display_syncs(self):
+        return _LowerDisplaySyncs()
 
-    def _finalize_sync(self, ls, ld):
+    def _lower_display_enters(self):
+        return _LowerDisplayEnters()
+
+    def _finalize_sync(self, ls, lds, lde):
         cases = dict((self.encoding[k], ls.visit(v)) for k, v in self.actions.items() if v)
         # print(f"cases: {cases}")
         self.comb += [
@@ -272,6 +290,13 @@ class FSM(Module):
         for register, next_value_ce, next_value in ls.registers:
             self.sync += If(next_value_ce, register.eq(next_value))
 
-        disps = dict((self.encoding[k], ld.visit(v)) for k, v in self.actions.items() if v)
-        for enc, disp in disps.items():
-            self.sync += If(self.state == enc, *disp)
+        disps_sync = dict((self.encoding[k], lds.visit(v)) for k, v in self.actions.items() if v)
+        for enc, stmts in disps_sync.items():
+            self.sync += If(self.state == enc, *stmts)
+
+        disp_enter = dict((self.encoding[k], lde.visit(v)) for k, v in self.actions.items() if v)
+        if any(map(len, disp_enter.values())):
+            self.last_state = Signal.like(self.state)
+            self.sync += self.last_state.eq(self.state)
+        for enc, stmts in disp_enter.items():
+            self.sync += If(self.state == enc & (self.last_state != self.state), *stmts)
