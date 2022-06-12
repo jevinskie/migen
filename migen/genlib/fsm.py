@@ -306,4 +306,4 @@ class FSM(Module):
             self.last_state = Signal.like(self.state)
             self.sync += self.last_state.eq(self.state)
             for enc, stmts in disp_enter.items():
-                self.sync += If(self.state == enc & (self.last_state != self.state), *stmts)
+                self.sync += If((self.state == enc) & (self.last_state != self.state), *stmts)
