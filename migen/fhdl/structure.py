@@ -198,6 +198,8 @@ class _Slice(_Value):
         self.start = start
         self.stop = stop
 
+    def __hash__(self):
+        return hash((self.value, self.start, self.stop))
 
 class _Part(_Value):
     def __init__(self, value, offset, width):
@@ -240,6 +242,8 @@ class Cat(_Value):
         _Value.__init__(self)
         self.l = [wrap(v) for v in _flat_iteration(args)]
 
+    def __hash__(self):
+        return hash(tuple(self.l))
 
 class Replicate(_Value):
     """Replicate a value
