@@ -168,6 +168,8 @@ class _Operator(_Value):
         self.op = op
         self.operands = [wrap(o) for o in operands]
 
+    def __hash__(self):
+        return hash((self.op, *self.operands))
 
 def Mux(sel, val1, val0):
     """Multiplex between two values
