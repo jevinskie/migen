@@ -88,13 +88,6 @@ class _LowerNext(NodeTransformer):
         else:
             return node
 
-class _LowerDisplayOnEnter(NodeTransformer):
-    def __init__(self, fsm):
-        self.fsm = fsm
-
-    def predicate(self, node):
-        if isinstance(node, DisplayOnEnter):
-
 class FSM(Module):
     """
     Finite state machine
@@ -225,10 +218,15 @@ class FSM(Module):
         self.next_state = Signal(max=nstates)
         self.next_state._enumeration = {n: "{}:{}".format(n, s) for n, s in self.decoding.items()}
 
-        does_nodes = NodeClassFilter(DisplayOnEnter)
-        does_cases = dict((self.encoding[k], does_nodes.visit(v)) for k, v in self.actions.items() if v is not None)
-
-        print(does_cases)
+        # Move DisplayOnEnter statements in self.actions to conditional sync statements
+        DOE_nodes = NodeClassFilter(DisplayOnEnter)
+        DOE_cases = dict((k, DOE_nodes.visit(v)) for k, v in self.actions.items() if v is not None)
+        for state, DOE_statements in DOE_cases.items():
+            self.sync += If(self.after_entering(state),
+                *DOE_statements
+            )
+            # Remove from unconditional actions list
+            self.actions[state] = [a for a in self.actions[state] if a not in DOE_statements]
 
         # drive entering/leaving signals
         for state, signal in self.before_leaving_signals.items():
@@ -242,9 +240,6 @@ class FSM(Module):
 
         # Allow overriding and extending control functionality (Next*) in subclasses.
         self._finalize_sync(self._lower_controls())
-
-    # def _attach_display_signals(self):
-        # return _AttachDisplayOnEnterSignals(self)
 
     def _lower_controls(self):
         return _LowerNext(self.next_state, self.encoding, self.state_aliases)
