@@ -81,10 +81,14 @@ class _ModuleSpecials(_ModuleProxy, _ModuleForwardAttr):
 
 class _ModuleSubmodules(_ModuleProxy):
     def __setattr__(self, name, value):
+        for sm in _flat_list(value):
+            sm._module_used = True
         self._fm._submodules += [(name, e) for e in _flat_list(value)]
         setattr(self._fm, name, value)
 
     def __iadd__(self, other):
+        for sm in _flat_list(other):
+            sm._module_used = True
         self._fm._submodules += [(None, e) for e in _flat_list(other)]
         return self
 

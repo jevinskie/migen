@@ -42,6 +42,15 @@ class _InputLister(NodeVisitor):
     def visit_Assign(self, node):
         self.visit(node.r)
 
+class _SimCallLister(NodeVisitor):
+    def __init__(self):
+        self.output_list = set()
+
+    def visit_Display(self, node):
+        self.output_list.add(node)
+
+    def visit_Finish(self, node):
+        self.output_list.add(node)
 
 def list_signals(node):
     lister = _SignalLister()
@@ -60,6 +69,10 @@ def list_inputs(node):
     lister.visit(node)
     return lister.output_list
 
+def list_sim_calls(node):
+    lister = _SimCallLister()
+    lister.visit(node)
+    return lister.output_list
 
 def _resort_statements(ol):
     return [statement for i, statement in

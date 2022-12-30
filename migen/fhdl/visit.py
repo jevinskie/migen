@@ -38,6 +38,12 @@ class NodeVisitor:
             self.visit_clock_domains(node)
         elif isinstance(node, _ArrayProxy):
             self.visit_ArrayProxy(node)
+        elif isinstance(node, Display):
+            return self.visit_Display(node)
+        elif isinstance(node, Finish):
+            return self.visit_Finish(node)
+        elif isinstance(node, EmptyStatement):
+            return self.visit_EmptyStatement(node)
         else:
             self.visit_unknown(node)
 
@@ -103,6 +109,16 @@ class NodeVisitor:
             self.visit(choice)
         self.visit(node.key)
 
+    def visit_Display(self, node):
+        for arg in node.args:
+            self.visit(arg)
+
+    def visit_Finish(self, node):
+        pass
+
+    def visit_EmptyStatement(self, node):
+        pass
+
     def visit_unknown(self, node):
         pass
 
@@ -146,6 +162,12 @@ class NodeTransformer:
             return self.visit_clock_domains(node)
         elif isinstance(node, _ArrayProxy):
             return self.visit_ArrayProxy(node)
+        elif isinstance(node, Display):
+            return self.visit_Display(node)
+        elif isinstance(node, Finish):
+            return self.visit_Finish(node)
+        elif isinstance(node, EmptyStatement):
+            return self.visit_EmptyStatement(node)
         else:
             return self.visit_unknown(node)
 
@@ -210,6 +232,15 @@ class NodeTransformer:
     def visit_ArrayProxy(self, node):
         return _ArrayProxy([self.visit(choice) for choice in node.choices],
             self.visit(node.key))
+
+    def visit_Display(self, node):
+        return Display(node.s, *map(self.visit, node.args))
+
+    def visit_Finish(self, node):
+        return node
+
+    def visit_EmptyStatement(self, node):
+        return node
 
     def visit_unknown(self, node):
         return node

@@ -11,10 +11,12 @@ class Example(Module):
         self.submodules += myfsm
 
         myfsm.act("FOO",
+            Display("FOO norm"),
             self.s.eq(1),
             NextState("BAR")
         )
         myfsm.act("BAR",
+            Display("BAR norm"),
             self.s.eq(0),
             NextValue(self.counter, self.counter + 1),
             NextValue(x[self.counter], 89),

@@ -764,12 +764,20 @@ class _ClockDomainList(list):
 
 # simulation
 
-class Display(_Statement):
+class SimStatement(_Statement):
+    pass
+
+class Display(SimStatement):
     def __init__(self, s, *args):
         self.s = s
         self.args = args
 
-class Finish(_Statement):
+class Finish(SimStatement):
+    pass
+
+# utility
+
+class EmptyStatement(_Statement):
     pass
 
 # fragment

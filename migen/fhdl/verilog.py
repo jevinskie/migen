@@ -169,6 +169,8 @@ def _printnode(ns, at, level, node):
         return "\t"*level + "$display(" + s + ");\n"
     elif isinstance(node, Finish):
         return "\t"*level + "$finish;\n"
+    elif isinstance(node, EmptyStatement):
+        return ""
     else:
         raise TypeError("Node of unrecognized type: "+str(type(node)))
 
