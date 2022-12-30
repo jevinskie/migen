@@ -3,11 +3,11 @@ from collections import OrderedDict
 from migen.fhdl.structure import *
 from migen.fhdl.structure import _Statement, _Slice, _Part, _ArrayProxy
 from migen.fhdl.module import Module, FinalizeError
-from migen.fhdl.visit import NodeTransformer
+from migen.fhdl.visit import NodeTransformer, NodeVisitor, NodeFilter, NodeClassFilter
 from migen.fhdl.bitcontainer import value_bits_sign
+from rich import print
 
-
-__all__ = ["AnonymousState", "NextState", "NextValue", "FSM"]
+__all__ = ["AnonymousState", "DisplayOnEnter", "NextState", "NextValue", "FSM"]
 
 
 class AnonymousState:
@@ -26,6 +26,8 @@ class NextValue(_Statement):
         self.target = target
         self.value = value
 
+class DisplayOnEnter(Display):
+    pass
 
 def _target_eq(a, b):
     if type(a) != type(b):
@@ -86,6 +88,12 @@ class _LowerNext(NodeTransformer):
         else:
             return node
 
+class _LowerDisplayOnEnter(NodeTransformer):
+    def __init__(self, fsm):
+        self.fsm = fsm
+
+    def predicate(self, node):
+        if isinstance(node, DisplayOnEnter):
 
 class FSM(Module):
     """
@@ -217,6 +225,11 @@ class FSM(Module):
         self.next_state = Signal(max=nstates)
         self.next_state._enumeration = {n: "{}:{}".format(n, s) for n, s in self.decoding.items()}
 
+        does_nodes = NodeClassFilter(DisplayOnEnter)
+        does_cases = dict((self.encoding[k], does_nodes.visit(v)) for k, v in self.actions.items() if v is not None)
+
+        print(does_cases)
+
         # drive entering/leaving signals
         for state, signal in self.before_leaving_signals.items():
             encoded = self.encoding[state]
@@ -229,6 +242,9 @@ class FSM(Module):
 
         # Allow overriding and extending control functionality (Next*) in subclasses.
         self._finalize_sync(self._lower_controls())
+
+    # def _attach_display_signals(self):
+        # return _AttachDisplayOnEnterSignals(self)
 
     def _lower_controls(self):
         return _LowerNext(self.next_state, self.encoding, self.state_aliases)

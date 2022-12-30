@@ -244,3 +244,26 @@ class NodeTransformer:
 
     def visit_unknown(self, node):
         return node
+
+
+class NodeFilter(NodeTransformer):
+    def predicate(self, node):
+        return True
+
+    def visit(self, node):
+        if isinstance(node, (list, tuple)):
+            return [n for n in self.visit_statements(node) if n is not None]
+        elif isinstance(node, dict):
+            d = self.visit_clock_domains(node)
+            return dict([(k, v) for k, v in d.items() if v is not None])
+        elif self.predicate(node):
+            return node
+        else:
+            return None
+
+class NodeClassFilter(NodeFilter):
+    def __init__(self, cls) -> None:
+        self.cls = cls
+
+    def predicate(self, node):
+        return isinstance(node, self.cls)
